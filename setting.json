@@ -1,0 +1,103 @@
+{
+  "adb": {
+    "adb_path": "AutoHuntDino/ADB/adb.exe",
+    "serial": "127.0.0.1:5557",
+    "host": "127.0.0.1",
+    "scan_ports": [
+      5555,
+      5556,
+      5557,
+      5558,
+      5560,
+      5575,
+      5585
+    ]
+  },
+  "templates": {
+    "Dino1": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Dino1.png",
+    "Dino2": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Dino2.png",
+    "X": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\X.png",
+    "Hunt1": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Hunt1.png",
+    "Home": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Home.png",
+    "Claim": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Claim.png",
+    "Claimall": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Claimall.png",
+    "Reset": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Reset.png"
+  },
+  "thresholds": {
+    "default": 0.85,
+    "Dino1": 0.7,
+    "Dino2": 0.7,
+    "X": 0.8,
+    "Hunt1": 0.85,
+    "Home": 0.7,
+    "Claim": 0.85,
+    "Claimall": 0.85,
+    "Reset": 0.85
+  },
+  "delays_s": {
+    "after_click": 0.85,
+    "between_scans": 0.7,
+    "after_screenshot": 0.05,
+    "after_map_switch": 0.9
+  },
+  "hold_ms": {
+    "default": 200,
+    "click_dino": 250,
+    "click_x": 200,
+    "click_hunt_btn": 250,
+    "click_hunt_coord": 200,
+    "click_map": 200,
+    "click_mail": 200,
+    "click_claim": 200,
+    "click_reset": 200
+  },
+  "coords": {
+    "dao_map": [
+      1006,
+      1550
+    ],
+    "hunt": [
+      527,
+      1679
+    ],
+    "thu": [
+      1003,
+      1445
+    ]
+  },
+  "rois": {
+    "check_x": [
+      48,
+      1336,
+      1070,
+      1801
+    ],
+    "home": [
+      361,
+      435,
+      683,
+      679
+    ],
+    "vung_san": [
+      55,
+      273,
+      1059,
+      1698
+    ],
+    "claim": [
+      166,
+      1126,
+      923,
+      1480
+    ]
+  },
+  "forbidden": {
+    "radius_px": 50
+  },
+  "logic": {
+    "max_scan_no_dino": 3,
+    "success_before_step5": 4,
+    "step5_before_step6": 5,
+    "fail_reset_threshold": 10
+  }
+}
