@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import threading
 import time
+import shutil
 from queue import Queue, Empty
 from typing import Dict, Optional, Tuple
 
@@ -150,6 +151,45 @@ class App(tk.Frame):
         self._build_ui()
         self._load_settings_to_ui()
         self._tick()
+
+    def _repo_root(self) -> str:
+        return os.path.abspath(os.path.dirname(__file__))
+
+    def _templates_dir(self) -> str:
+        return os.path.join(self._repo_root(), "templates")
+
+    def _short_template_value(self, any_path: str) -> str:
+        """
+        Normalize template path stored in setting.json to short form:
+        './templates/<file>'
+        """
+        p = (any_path or "").strip()
+        if not p:
+            return ""
+
+        p_norm = p.replace("\\", "/")
+        while "//" in p_norm:
+            p_norm = p_norm.replace("//", "/")
+        if p_norm.startswith("./templates/"):
+            return p_norm
+
+        # If it includes templates/<tail>, keep only the tail.
+        if "/templates/" in p_norm:
+            tail = p_norm.split("/templates/", 1)[1].lstrip("/")
+            return "./templates/" + tail
+
+        # Last resort: try to derive from absolute location.
+        tdir = os.path.abspath(self._templates_dir())
+        if os.path.isabs(p):
+            abs_candidate = os.path.abspath(p)
+            try:
+                if abs_candidate.startswith(tdir + os.sep):
+                    rel = os.path.relpath(abs_candidate, tdir)
+                    return "./templates/" + rel.replace("\\", "/")
+            except Exception:
+                pass
+
+        return "./templates/" + os.path.basename(p)
 
     # ── UI Build ────────────────────────────────────────────────────────────
     def _build_ui(self) -> None:
@@ -397,12 +437,12 @@ class App(tk.Frame):
                 res = work()
             except Exception as e:
                 if on_error:
-                    self.master.after(0, lambda: on_error(e))
+                    self.master.after(0, lambda err=e: on_error(err))
                 else:
-                    self.master.after(0, lambda: messagebox.showerror("Lỗi", str(e)))
+                    self.master.after(0, lambda err=e: messagebox.showerror("Lỗi", str(err)))
                 return
             if on_done:
-                self.master.after(0, lambda: on_done(res))
+                self.master.after(0, lambda r=res: on_done(r))
 
         threading.Thread(target=_runner, daemon=True).start()
 
@@ -776,7 +816,8 @@ class App(tk.Frame):
                 vars4[i].set(str(int(v[i])))
 
         for name, var in self.template_vars.items():
-            var.set(str(self.settings.get("templates", name, default="")))
+            raw = str(self.settings.get("templates", name, default=""))
+            var.set(self._short_template_value(raw))
 
         self.var_thr_default.set(str(self.settings.get("thresholds", "default", default=0.85)))
         for name, v in self.thr_vars.items():
@@ -798,7 +839,7 @@ class App(tk.Frame):
             self.settings.set([int(float(x.get() or 0)) for x in vars4], "rois", k)
 
         for name, var in self.template_vars.items():
-            self.settings.set(var.get().strip(), "templates", name)
+            self.settings.set(self._short_template_value(var.get().strip()), "templates", name)
 
         self.settings.set(float(self.var_thr_default.get() or 0.85), "thresholds", "default")
         for name, v in self.thr_vars.items():
@@ -1092,8 +1133,19 @@ class App(tk.Frame):
         )
         if not fp:
             return
-        self.template_vars[name].set(fp)
-        self.log(f"Template {name} = {fp}")
+        # Copy selected file into app templates dir so settings can store short paths.
+        templates_dir = self._templates_dir()
+        os.makedirs(templates_dir, exist_ok=True)
+        ext = os.path.splitext(fp)[1].lower()
+        if not ext:
+            ext = ".png"
+        out_path = os.path.join(templates_dir, f"{name}{ext}")
+        shutil.copy2(fp, out_path)
+        short = f"./templates/{name}{ext}"
+        self.template_vars[name].set(short)
+        self.settings.set(short, "templates", name)
+        self.settings.save()
+        self.log(f"Template {name} = {short}")
 
     def on_capture_crop_template(self, name: str) -> None:
         serial = self.connected_serial or self.settings.get("adb", "serial", default="")
@@ -1114,12 +1166,15 @@ class App(tk.Frame):
             self.master.wait_window(sel)
             if not sel.result_crop:
                 return
-            out_dir = resolve_path("AutoHuntDino/templates")
+            out_dir = self._templates_dir()
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, f"{name}.png")
             sel.result_crop.save(out_path)
-            self.template_vars[name].set(out_path)
-            self.log(f"Đã lưu template {name}: {out_path}")
+            short = f"./templates/{name}.png"
+            self.template_vars[name].set(short)
+            self.settings.set(short, "templates", name)
+            self.settings.save()
+            self.log(f"Đã lưu template {name}: {short}")
 
         def err(e: Exception):
             self._set_adb_busy(False, "Chụp lỗi")

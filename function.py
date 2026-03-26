@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -72,30 +73,73 @@ class Settings:
 
 class AdbClient:
     def __init__(self, adb_path: str):
-        self.adb_path = adb_path
+        self.adb_path = self._resolve_adb_path(adb_path)
+
+    @staticmethod
+    def _resolve_adb_path(adb_path: str) -> str:
+        # Prefer user-configured path (resolved) if it exists.
+        if adb_path:
+            p = resolve_path(str(adb_path))
+            if os.path.exists(p):
+                return p
+
+        # Fallback: adb in PATH.
+        p2 = shutil.which("adb")
+        if p2 and os.path.exists(p2):
+            return p2
+
+        # Fallback: common local bundle locations relative to this repo.
+        here = os.path.abspath(os.path.dirname(__file__))
+        candidates = [
+            os.path.join(here, "ADB", "adb.exe" if os.name == "nt" else "adb"),
+            os.path.join(os.path.dirname(here), "ADB", "adb.exe" if os.name == "nt" else "adb"),
+            os.path.join(os.path.dirname(here), "AutoHuntDino", "ADB", "adb.exe" if os.name == "nt" else "adb"),
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                return c
+
+        # Keep the original (so error message shows what was attempted).
+        return resolve_path(str(adb_path)) if adb_path else "adb"
 
     def _run(self, args: List[str], timeout_s: float = 10.0) -> str:
         cmd = [self.adb_path] + args
-        p = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            timeout=timeout_s,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-        )
-        return p.stdout.strip()
+        try:
+            p = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=timeout_s,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+        except FileNotFoundError as e:
+            raise RuntimeError(
+                "Không tìm thấy adb. Hãy kiểm tra `adb_path` trong `setting.json` "
+                "hoặc cài Android platform-tools và đảm bảo `adb` có trong PATH."
+                f"\nĐường dẫn đang dùng: {self.adb_path}"
+            ) from e
+        return (p.stdout or "").strip()
+
+    def start_server(self) -> str:
+        return self._run(["start-server"], timeout_s=10.0)
 
     def list_devices(self) -> List[str]:
-        out = self._run(["devices"], timeout_s=10.0)
+        # Ensure daemon is up; avoids some "device not found" / empty results.
+        self.start_server()
+        out = self._run(["devices", "-l"], timeout_s=10.0)
         serials: List[str] = []
         for line in out.splitlines():
             line = line.strip()
             if not line or line.startswith("List of devices"):
                 continue
             parts = line.split()
+            # Formats:
+            # <serial>\tdevice ...
+            # <serial>\toffline
+            # <serial>\tunauthorized ...
             if len(parts) >= 2 and parts[1] == "device":
                 serials.append(parts[0])
         return serials
@@ -290,7 +334,12 @@ def resolve_path(p: str) -> str:
     p = p.replace("/", os.sep)
     if os.path.isabs(p):
         return p
-    base = os.path.abspath(os.getcwd())
+    # Make relative paths stable regardless of current working directory.
+    here = os.path.abspath(os.path.dirname(__file__))
+    # Many config values are like "AutoHuntDino/ADB/adb.exe" even when the repo root
+    # is already ".../AutoHuntDino". If so, treat them as relative to the parent.
+    prefix = "AutoHuntDino" + os.sep
+    base = os.path.dirname(here) if p.startswith(prefix) else here
     return os.path.abspath(os.path.join(base, p))
 
 

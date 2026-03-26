@@ -1,7 +1,7 @@
 {
   "adb": {
     "adb_path": "AutoHuntDino/ADB/adb.exe",
-    "serial": "127.0.0.1:5557",
+    "serial": "127.0.0.1:5555",
     "host": "127.0.0.1",
     "scan_ports": [
       5555,
@@ -14,14 +14,14 @@
     ]
   },
   "templates": {
-    "Dino1": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Dino1.png",
-    "Dino2": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Dino2.png",
-    "X": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\X.png",
-    "Hunt1": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Hunt1.png",
-    "Home": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Home.png",
-    "Claim": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Claim.png",
-    "Claimall": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Claimall.png",
-    "Reset": "C:\\Users\\mythu\\OneDrive\\Desktop\\AutoHunt\\AutoHuntDino\\templates\\Reset.png"
+    "Dino1": "./templates/Dino1.png",
+    "Dino2": "./templates/Dino2.png",
+    "X": "./templates/X.png",
+    "Hunt1": "./templates/Hunt1.png",
+    "Home": "./templates/Home.png",
+    "Claim": "./templates/Claim.png",
+    "Claimall": "./templates/Claimall.png",
+    "Reset": "./templates/Reset.png"
   },
   "thresholds": {
     "default": 0.85,
@@ -73,10 +73,10 @@
       1801
     ],
     "home": [
-      361,
-      435,
-      683,
-      679
+      753,
+      1048,
+      1152,
+      1657
     ],
     "vung_san": [
       55,
