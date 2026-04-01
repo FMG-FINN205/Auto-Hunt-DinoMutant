@@ -40,7 +40,7 @@ AutoHuntDino/
 
 1. **Clone repository** (hoặc tải về):
    ```bash
-   git clone https://github.com/yourusername/AutoHuntDino.git
+   git clone https://github.com/FMG-FINN205/Auto-Hunt-DinoMutant
    cd AutoHuntDino
 
 2. **Cài đặt thư viện**
